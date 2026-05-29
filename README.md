@@ -57,6 +57,8 @@
 ```text
 paper-reading-skill/
 ├── SKILL.md
+├── .codex/skills/paper-reading/SKILL.md -> ../../../SKILL.md
+├── .cursor/skills/paper-reading/SKILL.md -> ../../../SKILL.md
 ├── README.md
 ├── requirements.txt
 ├── agents/
@@ -65,6 +67,8 @@ paper-reading-skill/
 ├── scripts/
 └── templates/
 ```
+
+`SKILL.md` 是唯一内容源文件；`.codex/skills/paper-reading/SKILL.md` 和 `.cursor/skills/paper-reading/SKILL.md` 建议作为符号链接保留，用于让不同工具在各自约定路径发现同一个 skill。
 
 运行 pipeline 后，会在当前工作目录生成：
 
@@ -91,6 +95,29 @@ bash scripts/bootstrap.sh
 
 如果你是把它作为 Codex skill 发布或分发，保留当前目录名 `paper-reading-skill/` 即可；公开调用名统一使用 `$paper-reading`。
 
+## 新设备与 Git 跟踪最佳实践
+
+在新设备上使用时，推荐直接通过 `git clone` 获取仓库。正常情况下不需要手动新建 `.cursor/` 或 `.codex/` 目录；如果仓库跟踪了这两个 skill 入口符号链接，Git 会一并还原：
+
+```text
+.codex/skills/paper-reading/SKILL.md -> ../../../SKILL.md
+.cursor/skills/paper-reading/SKILL.md -> ../../../SKILL.md
+```
+
+推荐的跟踪策略：
+- 必须跟踪根目录 `SKILL.md`，这是唯一需要维护的 skill 内容。
+- 若希望 Cursor / Codex 在 clone 后自动发现该 skill，跟踪上述两个符号链接本身；不要把 `.cursor/` 下的其他本机配置、缓存或 IDE 状态文件一并纳入版本控制。
+- 如果 `.gitignore` 中整体忽略了 `.cursor` 或 `.codex`，可以只对白名单入口文件解除忽略，或用 `git add -f .cursor/skills/paper-reading/SKILL.md .codex/skills/paper-reading/SKILL.md` 强制添加这两个符号链接。
+- `paper-reading.local.json` 不应跟踪，它保存的是本机 Obsidian 路径；新设备上从 `paper-reading.local.example.json` 复制一份后填写本机路径即可。
+
+如果某些平台或压缩包分发方式没有保留符号链接，可在仓库根目录重新创建：
+
+```bash
+mkdir -p .codex/skills/paper-reading .cursor/skills/paper-reading
+ln -sf ../../../SKILL.md .codex/skills/paper-reading/SKILL.md
+ln -sf ../../../SKILL.md .cursor/skills/paper-reading/SKILL.md
+```
+
 ## 最小使用方式
 在触发 skill 的 prompt 中明确指定论文输入，例如：
 
@@ -112,7 +139,26 @@ bash scripts/run_pipeline.sh "2510.12796"
 
 ### 同步到 Obsidian
 
-`scripts/run_pipeline.sh` 只负责预处理、素材抽取和报告骨架生成，不会自动同步到 Obsidian。请先补全最终报告并完成自检，再手动运行同步脚本：
+`scripts/run_pipeline.sh` 只负责预处理、素材抽取和报告骨架生成，不会在报告还是骨架时同步到 Obsidian。按 skill 工作流执行时，最终报告补全并完成自检后会默认同步到 Obsidian；只有当用户明确要求“不同步 / 不要同步 / 只生成本地报告”时才跳过。
+
+首次使用建议从示例配置创建本机配置：
+
+```bash
+cp paper-reading.local.example.json paper-reading.local.json
+```
+
+然后填写：
+
+```json
+{
+  "obsidian": {
+    "notes_dir": "/path/to/vault/Papers",
+    "images_dir": "/path/to/vault/Attachments/Papers"
+  }
+}
+```
+
+也可以通过环境变量或命令行参数指定路径：
 
 ```bash
 export OBSIDIAN_PAPER_NOTES_DIR="/path/to/vault/Papers"
@@ -152,6 +198,7 @@ python3 scripts/sync_obsidian.py \
 2. 让 skill 运行 `scripts/run_pipeline.sh` 完成预处理。
 3. 在 `{arxiv_id}_{title}/{arxiv_id}_阅读报告.md` 中补全分析正文。
 4. 交付前重新检查图片、表格、公式和外部文献是否都已落到主报告。
+5. 默认同步到 Obsidian；若本次不想同步，需要在 prompt 中明确说明“不同步”。
 
 ## 面向发布的说明
 - `SKILL.md` 保留给模型的执行指令，不建议把它当 README 直接复用。
