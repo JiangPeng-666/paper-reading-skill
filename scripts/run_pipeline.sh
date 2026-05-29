@@ -8,17 +8,20 @@ fi
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 INPUT="$1"
+OUTPUT_DIR="${PWD}/output"
 
 if [[ -d "${ROOT_DIR}/.venv-paper-reading" ]]; then
   source "${ROOT_DIR}/.venv-paper-reading/bin/activate"
 fi
 
-python "${ROOT_DIR}/scripts/prepare_workspace.py" --input "${INPUT}" --root "${PWD}"
-python "${ROOT_DIR}/scripts/fetch_sources.py" --input "${INPUT}" --root "${PWD}"
-python "${ROOT_DIR}/scripts/extract_references.py" --input "${INPUT}" --root "${PWD}"
-python "${ROOT_DIR}/scripts/extract_images.py" --input "${INPUT}" --root "${PWD}"
-python "${ROOT_DIR}/scripts/build_report_skeleton.py" --input "${INPUT}" --root "${PWD}"
-python "${ROOT_DIR}/scripts/validate_report_text.py" --input "${INPUT}" --root "${PWD}"
+mkdir -p "${OUTPUT_DIR}"
+
+python "${ROOT_DIR}/scripts/prepare_workspace.py" --input "${INPUT}" --root "${OUTPUT_DIR}"
+python "${ROOT_DIR}/scripts/fetch_sources.py" --input "${INPUT}" --root "${OUTPUT_DIR}"
+python "${ROOT_DIR}/scripts/extract_references.py" --input "${INPUT}" --root "${OUTPUT_DIR}"
+python "${ROOT_DIR}/scripts/extract_images.py" --input "${INPUT}" --root "${OUTPUT_DIR}"
+python "${ROOT_DIR}/scripts/build_report_skeleton.py" --input "${INPUT}" --root "${OUTPUT_DIR}"
+python "${ROOT_DIR}/scripts/validate_report_text.py" --input "${INPUT}" --root "${OUTPUT_DIR}"
 
 echo "Pipeline complete."
 echo "Tip: before reading/editing Chinese reports in Windows PowerShell, run:"
